@@ -4,20 +4,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Use the database name that you created
-// const DATABASE_NAME = process.env.DB_NAME || '';
-// const USERNAME = process.env.USERNAME || '';
-// const PASSWORD = process.env.PASSWORD || '';
-// const HOST = process.env.HOST || '';
-
-// const DATABASE_NAME = 'medivahan_doctor_dev';
-// const USERNAME = 'medivahandev';
-// const PASSWORD = 'Medi@0532';
-// const HOST = '13.127.149.87';
-
-const DATABASE_NAME = 'medivahan_doctor_dev';
-const USERNAME = 'root';
-const PASSWORD = '123456';
-const HOST = 'localhost';
+const DATABASE_NAME = process.env.REACT_APP_DB_NAME as string;
+const USERNAME = process.env.REACT_APP_USERNAME as string;
+const PASSWORD = process.env.REACT_APP_PASSWORD as string;
+const HOST = process.env.REACT_APP_HOST as string;
 
 const sequelize = new Sequelize(DATABASE_NAME, USERNAME, PASSWORD, {
   host: HOST,

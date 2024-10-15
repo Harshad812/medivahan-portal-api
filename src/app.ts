@@ -5,6 +5,7 @@ import clinicRoutes from './routes/clinicRoutes';
 import prescriptionRoutes from './routes/prescriptionRoutes';
 import adminRoutes from './routes/adminRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
+import deliveryBoyRoutes from './routes/deliveryBoyRoutes';
 import passport from './middleware/passport';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -35,6 +36,7 @@ const startServer = async () => {
     app.use('/api', prescriptionRoutes);
     app.use('/api', adminRoutes);
     app.use('/api', dashboardRoutes);
+    app.use('/api', deliveryBoyRoutes);
     app.use('/', (req, res) => {
       res.send('Api started..!');
     });

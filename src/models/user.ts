@@ -112,10 +112,12 @@ User.init(
     discount: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      defaultValue: 0,
     },
     commission: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      defaultValue: 0,
     },
   },
   {

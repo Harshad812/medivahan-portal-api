@@ -6,14 +6,28 @@ import { Op } from 'sequelize';
 import multiparty from 'multiparty';
 import fs from 'fs';
 import { uploadImageBufferToS3 } from '../utils/uploadImageBufferToS3';
+import User from '../models/user';
 
 const JWT_SECRET = 'your_jwt_secret';
+
+Prescription.belongsTo(User, { foreignKey: 'user_id' });
+User.hasMany(Prescription, { foreignKey: 'user_id' });
 
 export const prescriptionDetails = async (req: Request, res: Response) => {
   const prescription_id = parseInt(req.params.id, 10);
 
   try {
-    const prescription = await Prescription.findByPk(prescription_id);
+    const prescription = await Prescription.findOne({
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'firstname', 'lastname', 'commission', 'discount'],
+        },
+      ],
+      where: {
+        prescription_id,
+      },
+    });
 
     if (!prescription) {
       return res.status(404).json({ message: 'Prescription not found' });

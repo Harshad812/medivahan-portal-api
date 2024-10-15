@@ -13,6 +13,8 @@ interface PrescriptionAttributes {
   city?: string;
   near_by?: string;
   status?: string;
+  bill_number?: string;
+  total_bill?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -34,6 +36,8 @@ class Prescription
   public city?: string;
   public near_by?: string;
   public status?: string;
+  public bill_number?: string;
+  public total_bill?: number;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -92,6 +96,15 @@ Prescription.init(
       ),
       allowNull: true,
       defaultValue: 'open',
+    },
+    bill_number: {
+      type: DataTypes.STRING(10),
+      allowNull: true,
+    },
+    total_bill: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
     },
   },
 

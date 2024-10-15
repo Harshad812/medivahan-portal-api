@@ -1,6 +1,6 @@
 import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
-import User from '../models/user';
+import Admin from '../models/admin';
 
 const JWT_SECRET = 'your_jwt_secret';
 
@@ -12,7 +12,7 @@ const opts = {
 passport.use(
   new JwtStrategy(opts, async (jwt_payload, done) => {
     try {
-      const user = await User.findByPk(jwt_payload.id);
+      const user = await Admin.findByPk(jwt_payload.id);
       if (user) {
         return done(null, user);
       } else {
