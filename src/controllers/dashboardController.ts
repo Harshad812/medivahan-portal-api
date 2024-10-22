@@ -8,7 +8,13 @@ User.hasMany(Prescription, { foreignKey: 'user_id' });
 export const recentPrescriptions = async (req: Request, res: Response) => {
   try {
     const prescription = await Prescription.findAndCountAll({
-      attributes: ['prescription_id', 'patient_name', 'mobile', 'status'],
+      attributes: [
+        'prescription_id',
+        'patient_name',
+        'mobile',
+        'status',
+        'createdAt',
+      ],
       include: [
         {
           model: User,

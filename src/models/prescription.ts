@@ -92,7 +92,8 @@ Prescription.init(
         'closed',
         'delivered',
         'decline',
-        'open'
+        'open',
+        'preparing'
       ),
       allowNull: true,
       defaultValue: 'open',

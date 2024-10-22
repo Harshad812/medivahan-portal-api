@@ -15,7 +15,20 @@ import cors from 'cors';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+const corsOptions = {
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200,
+  preflightContinue: false,
+};
+
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
+
 const PORT = process.env.PORT || 8000;
 
 app.use(express.json());

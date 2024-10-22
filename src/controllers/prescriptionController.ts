@@ -343,3 +343,157 @@ export const getPrescriptionsByFilters = async (
     });
   }
 };
+
+//Dashboard
+
+export const getAllPrescription = async (req: Request, res: Response) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search = '',
+      status = '',
+      filter = '',
+    } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+
+    const searchCondition: any = {
+      [Op.and]: [],
+    };
+
+    if (search) {
+      searchCondition[Op.and].push({
+        [Op.or]: [
+          { patient_name: { [Op.like]: `%${search}%` } },
+          { mobile: { [Op.like]: `%${search}%` } },
+          {
+            '$User.firstname$': { [Op.like]: `%${search}%` },
+          },
+          {
+            '$User.lastname$': { [Op.like]: `%${search}%` },
+          },
+        ],
+      });
+    }
+
+    if (status) {
+      if (status !== 'all') {
+        searchCondition[Op.and].push({
+          status: status,
+        });
+      }
+    }
+
+    let order: any[] = [['updatedAt', 'DESC']]; // Default to sorting by last update (newest first)
+
+    switch (filter) {
+      case 'today':
+        order = [['createdAt', 'DESC']]; // Sort by creation date for today (most recent first)
+        searchCondition[Op.and].push({
+          createdAt: {
+            [Op.gte]: new Date(new Date().setHours(0, 0, 0, 0)), // Start of today
+            [Op.lt]: new Date(new Date().setHours(23, 59, 59, 999)), // End of today
+          },
+        });
+        break;
+      case 'last_7_days':
+        order = [['createdAt', 'DESC']]; // Sort by creation date (most recent first)
+        searchCondition[Op.and].push({
+          createdAt: {
+            [Op.gte]: new Date(new Date().setDate(new Date().getDate() - 7)), // Last 7 days
+          },
+        });
+        break;
+      case 'last_15_days':
+        order = [['createdAt', 'DESC']]; // Sort by creation date (most recent first)
+        searchCondition[Op.and].push({
+          createdAt: {
+            [Op.gte]: new Date(new Date().setDate(new Date().getDate() - 15)), // Last 15 days
+          },
+        });
+        break;
+      case 'last_update':
+        order = [['updatedAt', 'DESC']]; // Sort by last update (most recent first)
+        break;
+      default:
+        order = [['updatedAt', 'DESC']]; // Default sort
+    }
+
+    const prescription = await Prescription.findAndCountAll({
+      attributes: [
+        'prescription_id',
+        'patient_name',
+        'mobile',
+        'status',
+        'createdAt',
+      ],
+      where: searchCondition[Op.and].length ? searchCondition : {},
+      include: [
+        {
+          model: User,
+          attributes: ['firstname', 'lastname'],
+        },
+      ],
+      limit: Number(limit),
+      offset: offset,
+      order: order,
+    });
+
+    if (!prescription) {
+      return res.status(404).json({ message: 'prescription not found' });
+    }
+
+    const totalPages = Math.ceil(prescription.count / Number(limit));
+
+    res.status(200).json({
+      message: 'prescription list retrieved successfully',
+      prescription: prescription.rows,
+      count: prescription.count,
+      currentPage: Number(page),
+      totalPages: totalPages,
+    });
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid or expired token' });
+    }
+    res.status(500).json({
+      message: 'Error retrieving prescription list',
+      error: error.message,
+    });
+  }
+};
+
+export const updatePrescriptionStatus = async (req: Request, res: Response) => {
+  const { ids, status } = req.body; // Extract ids and status from request body
+
+  // Validate input
+  if (!Array.isArray(ids) || ids.length === 0 || !status) {
+    return res.status(400).json({
+      message: 'Invalid request. Please provide an array of IDs and a status.',
+    });
+  }
+
+  try {
+    // Update prescriptions with the given IDs
+    const [updatedCount] = await Prescription.update(
+      { status }, // New status to set
+      { where: { prescription_id: ids } } // Filter by prescription IDs
+    );
+
+    if (updatedCount === 0) {
+      return res
+        .status(404)
+        .json({ message: 'No prescriptions found with the provided IDs.' });
+    }
+
+    res.status(200).json({
+      message: `${updatedCount} prescription(s) updated successfully.`,
+      updatedCount,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      message: 'Error updating prescription status',
+      error: error.message,
+    });
+  }
+};
