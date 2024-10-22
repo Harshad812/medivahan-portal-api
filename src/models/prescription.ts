@@ -1,6 +1,7 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 import User from './user';
+import DeliveryBoy from './delivery_boy';
 
 interface PrescriptionAttributes {
   prescription_id?: number;
@@ -15,6 +16,7 @@ interface PrescriptionAttributes {
   status?: string;
   bill_number?: string;
   total_bill?: number;
+  deliveryboy_id?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -38,6 +40,7 @@ class Prescription
   public status?: string;
   public bill_number?: string;
   public total_bill?: number;
+  public deliveryboy_id?: number;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -106,6 +109,14 @@ Prescription.init(
       type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: 0,
+    },
+    deliveryboy_id: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: true,
+      references: {
+        model: DeliveryBoy,
+        key: 'd_id',
+      },
     },
   },
 

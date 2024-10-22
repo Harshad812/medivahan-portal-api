@@ -7,6 +7,7 @@ import {
   prescriptionDetails,
   prescriptionList,
   updatePrescriptionDetails,
+  updatePrescriptionDetailsInDashboard,
   updatePrescriptionStatus,
 } from '../controllers/prescriptionController';
 
@@ -25,6 +26,12 @@ router.put(
   '/dashboard/prescriptions/update-status',
   passport.authenticate('jwt', { session: false }),
   updatePrescriptionStatus
+);
+
+router.put(
+  '/dashboard/prescriptions/:prescription_id',
+  passport.authenticate('jwt', { session: false }),
+  updatePrescriptionDetailsInDashboard
 );
 
 //App route

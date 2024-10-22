@@ -497,3 +497,35 @@ export const updatePrescriptionStatus = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const updatePrescriptionDetailsInDashboard = async (
+  req: Request,
+  res: Response
+) => {
+  const { prescription_id } = req.params;
+  const { bill_number, total_bill, deliveryboy_id } = req.body;
+
+  try {
+    const prescription = await Prescription.findByPk(prescription_id);
+
+    if (!prescription) {
+      return res.status(404).json({ message: 'Prescription not found' });
+    }
+
+    // Update fields
+    prescription.bill_number = bill_number || prescription.bill_number;
+    prescription.total_bill =
+      total_bill !== undefined ? total_bill : prescription.total_bill;
+    prescription.deliveryboy_id = deliveryboy_id || prescription.deliveryboy_id;
+
+    // Save updated prescription
+    await prescription.save();
+
+    return res
+      .status(200)
+      .json({ message: 'Prescription updated successfully', prescription });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
