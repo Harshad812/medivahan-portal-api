@@ -43,9 +43,7 @@ export const uploadBase64ImageToS3 = async (
     });
 
     // Presigned URL valid for 1 hour
-    const preSignedUrl = await getSignedUrl(s3Client, getCommand, {
-      expiresIn: 3600,
-    });
+    const preSignedUrl = await getSignedUrl(s3Client, getCommand);
 
     return preSignedUrl;
   } catch (err) {

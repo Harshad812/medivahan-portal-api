@@ -6,6 +6,7 @@ Prescription.belongsTo(User, { foreignKey: 'user_id' });
 User.hasMany(Prescription, { foreignKey: 'user_id' });
 
 export const recentPrescriptions = async (req: Request, res: Response) => {
+  const { limit = 10 } = req.query;
   try {
     const prescription = await Prescription.findAndCountAll({
       attributes: [
@@ -21,6 +22,7 @@ export const recentPrescriptions = async (req: Request, res: Response) => {
           attributes: ['firstname', 'lastname'],
         },
       ],
+      limit: Number(limit),
     });
 
     if (!prescription) {
@@ -44,9 +46,11 @@ export const recentPrescriptions = async (req: Request, res: Response) => {
 };
 
 export const requireDetailsDoctorList = async (req: Request, res: Response) => {
+  const { limit = 10 } = req.query;
   try {
     const doctor = await User.findAndCountAll({
       attributes: ['id', 'firstname', 'lastname', 'profileImage'],
+      limit: Number(limit),
     });
 
     if (!doctor) {
