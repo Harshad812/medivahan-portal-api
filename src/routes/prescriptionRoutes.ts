@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import passport from '../middleware/passport';
 import {
+  createBillAndUpdatePrescription,
   createPrescription,
   getAllPrescription,
   getPrescriptionsByFilters,
+  getPrescriptionStatusCount,
   prescriptionDetails,
   prescriptionList,
   updatePrescriptionDetails,
-  updatePrescriptionDetailsInDashboard,
   updatePrescriptionStatus,
 } from '../controllers/prescriptionController';
 
@@ -22,6 +23,12 @@ router.get(
   getAllPrescription
 );
 
+router.get(
+  '/dashboard/all-prescription-count',
+  passport.authenticate('jwt', { session: false }),
+  getPrescriptionStatusCount
+);
+
 router.put(
   '/dashboard/prescriptions/update-status',
   passport.authenticate('jwt', { session: false }),
@@ -31,7 +38,7 @@ router.put(
 router.put(
   '/dashboard/prescriptions/:prescription_id',
   passport.authenticate('jwt', { session: false }),
-  updatePrescriptionDetailsInDashboard
+  createBillAndUpdatePrescription
 );
 
 //App route

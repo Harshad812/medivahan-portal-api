@@ -2,6 +2,7 @@ import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 import User from './user';
 import DeliveryBoy from './delivery_boy';
+import Bill from './bill';
 
 interface PrescriptionAttributes {
   prescription_id?: number;
@@ -14,8 +15,7 @@ interface PrescriptionAttributes {
   city?: string;
   near_by?: string;
   status?: string;
-  bill_number?: string;
-  total_bill?: number;
+  bill_id?: number;
   deliveryboy_id?: number;
   createdAt?: Date;
   updatedAt?: Date;
@@ -40,6 +40,7 @@ class Prescription
   public status?: string;
   public bill_number?: string;
   public total_bill?: number;
+  public bill_id?: number;
   public deliveryboy_id?: number;
 
   public readonly createdAt!: Date;
@@ -91,24 +92,24 @@ Prescription.init(
     },
     status: {
       type: DataTypes.ENUM(
-        'received',
-        'closed',
-        'delivered',
-        'decline',
         'open',
-        'preparing'
+        'preparing',
+        'decline',
+        'dispatch',
+        'delivered',
+        'return',
+        'closed'
       ),
       allowNull: true,
       defaultValue: 'open',
     },
-    bill_number: {
-      type: DataTypes.STRING(10),
+    bill_id: {
+      type: DataTypes.INTEGER.UNSIGNED,
       allowNull: true,
-    },
-    total_bill: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      defaultValue: 0,
+      references: {
+        model: Bill,
+        key: 'bill_id',
+      },
     },
     deliveryboy_id: {
       type: DataTypes.INTEGER.UNSIGNED,

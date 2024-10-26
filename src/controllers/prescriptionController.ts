@@ -7,11 +7,15 @@ import multiparty from 'multiparty';
 import fs from 'fs';
 import { uploadImageBufferToS3 } from '../utils/uploadImageBufferToS3';
 import User from '../models/user';
+import Bill from '../models/bill';
+import sequelize from 'sequelize';
 
 const JWT_SECRET = 'your_jwt_secret';
 
 Prescription.belongsTo(User, { foreignKey: 'user_id' });
+Prescription.belongsTo(Bill, { foreignKey: 'bill_id' });
 User.hasMany(Prescription, { foreignKey: 'user_id' });
+Bill.hasMany(Prescription, { foreignKey: 'bill_id' });
 
 export const prescriptionDetails = async (req: Request, res: Response) => {
   const prescription_id = parseInt(req.params.id, 10);
@@ -22,6 +26,10 @@ export const prescriptionDetails = async (req: Request, res: Response) => {
         {
           model: User,
           attributes: ['id', 'firstname', 'lastname', 'commission', 'discount'],
+        },
+        {
+          model: Bill,
+          attributes: ['bill_id', 'bill_number', 'total_bill', 'bills'],
         },
       ],
       where: {
@@ -498,34 +506,129 @@ export const updatePrescriptionStatus = async (req: Request, res: Response) => {
   }
 };
 
-export const updatePrescriptionDetailsInDashboard = async (
+export const createBillAndUpdatePrescription = async (
   req: Request,
   res: Response
 ) => {
-  const { prescription_id } = req.params;
-  const { bill_number, total_bill, deliveryboy_id } = req.body;
+  const prescription_id = parseInt(req.params.prescription_id, 10);
 
-  try {
-    const prescription = await Prescription.findByPk(prescription_id);
+  if (!prescription_id) {
+    return res.status(400).json({ message: 'Prescription ID is required!' });
+  }
 
-    if (!prescription) {
-      return res.status(404).json({ message: 'Prescription not found' });
+  const form = new multiparty.Form();
+
+  form.parse(req, async (err, fields, files) => {
+    if (err) {
+      return res.status(500).send('Error parsing form');
     }
 
-    // Update fields
-    prescription.bill_number = bill_number || prescription.bill_number;
-    prescription.total_bill =
-      total_bill !== undefined ? total_bill : prescription.total_bill;
-    prescription.deliveryboy_id = deliveryboy_id || prescription.deliveryboy_id;
+    try {
+      const prescription = await Prescription.findByPk(prescription_id);
+      if (!prescription) {
+        return res.status(404).json({ message: 'Prescription not found' });
+      }
 
-    // Save updated prescription
-    await prescription.save();
+      const { bill_number, total_bill, deliveryboy_id } = fields;
+      const uploadedBills = [];
 
-    return res
-      .status(200)
-      .json({ message: 'Prescription updated successfully', prescription });
+      if (files?.bills) {
+        for (const file of files.bills) {
+          // console.log('file', file);
+          const buffer = fs.readFileSync(file.path);
+          const uploadedBillUrl = await uploadImageBufferToS3(
+            buffer,
+            file.originalFilename
+          );
+          fs.unlink(file.path, (err) => {
+            if (err) console.error('Error deleting file:', err);
+          });
+
+          console.log('uploadedBillUrl', uploadedBillUrl);
+          if (uploadedBillUrl) uploadedBills.push(uploadedBillUrl);
+        }
+      }
+
+      // Check if a bill already exists for the prescription
+      let bill = await Bill.findOne({ where: { prescription_id } });
+
+      if (bill) {
+        // Update existing bill
+        bill.bill_number = bill_number[0];
+        bill.total_bill = parseFloat(total_bill[0]);
+        bill.bills = uploadedBills.length ? uploadedBills : bill.bills; // Preserve existing files if none are uploaded
+        await bill.save();
+      } else {
+        // Create a new bill if none exists
+        bill = await Bill.create({
+          user_id: prescription?.user_id,
+          prescription_id: prescription?.prescription_id,
+          bill_number: bill_number[0],
+          total_bill: parseFloat(total_bill[0]),
+          bills: uploadedBills.length ? uploadedBills : [],
+        });
+      }
+
+      prescription.bill_id = bill.bill_id;
+      prescription.deliveryboy_id =
+        deliveryboy_id || prescription.deliveryboy_id;
+      await prescription.save();
+
+      res.status(200).json({
+        message:
+          'Bill updated (or created) and prescription updated successfully',
+        bill,
+        prescription,
+      });
+    } catch (error: any) {
+      console.error(error);
+      res
+        .status(500)
+        .json({ message: 'Internal server error', error: error.message });
+    }
+  });
+};
+
+const possibleStatuses = [
+  'open',
+  'preparing',
+  'decline',
+  'dispatch',
+  'delivered',
+  'return',
+  'closed',
+];
+
+export const getPrescriptionStatusCount = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const statusCounts = await Prescription.findAll({
+      attributes: [
+        'status',
+        [sequelize.fn('COUNT', sequelize.col('status')), 'count'],
+      ],
+      group: 'status',
+    });
+
+    
+    const statusCountMap: { [key: string]: number } = {};
+
+    
+    statusCounts.forEach((item: any) => {
+      statusCountMap[item.status] = item.getDataValue('count');
+    });
+
+    
+    const result = possibleStatuses.map((status) => ({
+      status,
+      count: statusCountMap[status] || 0,   
+    }));
+
+    return res.status(200).json(result);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error('Error fetching prescription status count:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };
