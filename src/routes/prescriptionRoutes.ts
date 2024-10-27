@@ -5,6 +5,7 @@ import {
   createPrescription,
   getAllPrescription,
   getPrescriptionByDeliveryBoy,
+  getPrescriptionForFinance,
   getPrescriptionsByFilters,
   getPrescriptionStatusCount,
   getPrescriptionStatusCountByDeliveryBoy,
@@ -45,6 +46,10 @@ router.get(
   '/dashboard/all-prescription-count-by-delivery-boy/:d_id',
   passport.authenticate('jwt', { session: false }),
   getPrescriptionStatusCountByDeliveryBoy
+)
+
+router.get(
+  "/dashboard/prescriptions/finance", passport.authenticate('jwt', { session: false }),getPrescriptionForFinance
 )
 
 router.put(
