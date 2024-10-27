@@ -96,4 +96,5 @@ Clinic.init(
   }
 );
 
+
 export default Clinic;

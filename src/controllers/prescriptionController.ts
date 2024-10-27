@@ -632,3 +632,39 @@ export const getPrescriptionStatusCount = async (
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+export const getPrescriptionStatusCountByDoctor = async (
+  req: Request,
+  res: Response
+) => {
+  const user_id = parseInt(req.params.user_id, 10);
+  try {
+    const statusCounts = await Prescription.findAll({
+      attributes: [
+        'status',
+        [sequelize.fn('COUNT', sequelize.col('status')), 'count'],
+      ],
+      where:{user_id},
+      group: 'status',
+    });
+
+    
+    const statusCountMap: { [key: string]: number } = {};
+
+    
+    statusCounts.forEach((item: any) => {
+      statusCountMap[item.status] = item.getDataValue('count');
+    });
+
+    
+    const result = possibleStatuses.map((status) => ({
+      status,
+      count: statusCountMap[status] || 0,   
+    }));
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('Error fetching prescription status count:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};

@@ -6,6 +6,7 @@ import {
   getAllPrescription,
   getPrescriptionsByFilters,
   getPrescriptionStatusCount,
+  getPrescriptionStatusCountByDoctor,
   prescriptionDetails,
   prescriptionList,
   updatePrescriptionDetails,
@@ -27,6 +28,12 @@ router.get(
   '/dashboard/all-prescription-count',
   passport.authenticate('jwt', { session: false }),
   getPrescriptionStatusCount
+);
+
+router.get(
+  '/dashboard/all-prescription-count-by-doctor/:user_id',
+  passport.authenticate('jwt', { session: false }),
+  getPrescriptionStatusCountByDoctor
 );
 
 router.put(

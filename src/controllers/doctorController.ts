@@ -1,32 +1,41 @@
 import { Request, Response } from 'express';
 import User from '../models/user';
 import { Op, Sequelize } from 'sequelize';
+import Clinic from '../models/clinic';
+import Prescription from '../models/prescription';
+import Bill from '../models/bill';
+
+Clinic.belongsTo(User, { foreignKey: 'id' });
+User.hasMany(Clinic, { foreignKey: 'user_id' });
+
 
 export const doctorDetails = async (req: Request, res: Response) => {
-  const userId = parseInt(req.params.id, 10);
+  const userId = parseInt(req.params.user_id, 10);
+  
 
   try {
-    const user = await User.findByPk(userId);
+    const user = await User.findOne({
+      where: {
+        id: userId 
+      },
+      attributes: {
+        exclude: ['password'] 
+      },
+      include: [
+        {
+          model: Clinic,
+          as: 'Clinics'
+        }
+      ]
+    });
 
     if (!user) {
       return res.status(404).json({ message: 'Doctor not found' });
     }
 
-    const userResponse = {
-      id: user?.id,
-      firstname: user?.firstname,
-      lastname: user?.lastname,
-      mobile: user?.mobile,
-      email: user?.email,
-      designation: user?.designation,
-      isMobileVerify: user?.isMobileVerify ?? false,
-      profileImage: user?.profileImage,
-      isClinicAdded: user?.isClinicAdded,
-    };
-
     res.status(200).json({
       message: 'Doctor details retrieved successfully',
-      user: userResponse,
+      doctor: user,
     });
   } catch (error: any) {
     if (error.name === 'JsonWebTokenError') {
@@ -158,6 +167,188 @@ export const getAllDoctor = async (req: Request, res: Response) => {
     }
     res.status(500).json({
       message: 'Error retrieving doctor list',
+      error: error.message,
+    });
+  }
+};
+
+export const getPrescriptionByDoctor = async (req: Request, res: Response) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search = '',
+      status = '',
+      filter = '',
+      user_id = '' // Add user_id to query params
+    } = req.query;
+
+    const offset = (Number(page) - 1) * Number(limit);
+
+    const searchCondition: any = {
+      [Op.and]: [],
+    };
+
+    // Search conditions
+    if (search) {
+      searchCondition[Op.and].push({
+        [Op.or]: [
+          { patient_name: { [Op.like]: `%${search}%` } },
+          { mobile: { [Op.like]: `%${search}%` } },
+          {
+            '$User.firstname$': { [Op.like]: `%${search}%` },
+          },
+          {
+            '$User.lastname$': { [Op.like]: `%${search}%` },
+          },
+        ],
+      });
+    }
+
+    // Status filter
+    if (status && status !== 'all') {
+      searchCondition[Op.and].push({ status });
+    }
+
+    // User ID filter
+    if (user_id) {
+      searchCondition[Op.and].push({ user_id }); // Add user_id condition
+    }
+
+    let order: any[] = [['updatedAt', 'DESC']]; // Default sorting by last update
+
+    // Filter conditions
+    switch (filter) {
+      case 'today':
+        order = [['createdAt', 'DESC']];
+        searchCondition[Op.and].push({
+          createdAt: {
+            [Op.gte]: new Date(new Date().setHours(0, 0, 0, 0)), // Start of today
+            [Op.lt]: new Date(new Date().setHours(23, 59, 59, 999)), // End of today
+          },
+        });
+        break;
+      case 'last_7_days':
+        searchCondition[Op.and].push({
+          createdAt: {
+            [Op.gte]: new Date(new Date().setDate(new Date().getDate() - 7)), // Last 7 days
+          },
+        });
+        break;
+      case 'last_15_days':
+        searchCondition[Op.and].push({
+          createdAt: {
+            [Op.gte]: new Date(new Date().setDate(new Date().getDate() - 15)), // Last 15 days
+          },
+        });
+        break;
+      case 'last_update':
+        break; // No need to change order
+      default:
+        break; // Default sort
+    }
+
+    const prescription = await Prescription.findAndCountAll({
+      attributes: [
+        'prescription_id',
+        'patient_name',
+        'mobile',
+        'status',
+        'createdAt',
+      ],
+      where: searchCondition[Op.and].length ? searchCondition : {},
+      include: [
+        {
+          model: User,
+          attributes: ['firstname', 'lastname', 'discount', 'commission'], // Ensure these fields are included
+        },
+        {
+          model: Bill,
+          attributes: ['bill_number', 'total_bill'],
+        },
+      ],
+      limit: Number(limit),
+      offset: offset,
+      order: order,
+    });
+
+    if (!prescription || prescription.count === 0) {
+      return res.status(404).json({ message: 'Prescription not found' });
+    }
+
+    // Calculate total discount and commission for each prescription
+    const prescriptionData = prescription.rows.map((item:any) => {
+      const totalBill = item?.Bill?.total_bill ?? 0; // Fetch total_bill
+      const discountPercent = item?.User?.discount || 0; // Fetch discount
+      const commissionPercent = item?.User?.commission || 0; // Fetch commission
+
+      const discountAmount = (totalBill * (discountPercent / 100)).toFixed(2); // Calculate discount amount
+      const commissionAmount = (totalBill * (commissionPercent / 100)).toFixed(2); // Calculate commission amount
+
+      return {
+        ...item.toJSON(), // Spread the existing item data
+        discountAmount: Number(discountAmount), // Add calculated discount amount
+        commissionAmount: Number(commissionAmount), // Add calculated commission amount
+      };
+    });
+
+    const totalPages = Math.ceil(prescription.count / Number(limit));
+
+    res.status(200).json({
+      message: 'Prescription list retrieved successfully',
+      prescription: prescriptionData, // Use the modified prescription data with calculated amounts
+      count: prescription.count,
+      currentPage: Number(page),
+      totalPages: totalPages,
+    });
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid or expired token' });
+    }
+    res.status(500).json({
+      message: 'Error retrieving prescription list',
+      error: error.message,
+    });
+  }
+};
+
+
+
+
+export const updateCommissionOrDiscount = async (req: Request, res: Response) => {
+  const { id, commission, discount } = req.body;
+
+  try {
+    // Find the user by ID
+    const user = await User.findOne({ where: { id } });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update the commission or discount if provided
+    if (commission !== undefined) {
+      user.commission = commission;
+    }
+    
+    if (discount !== undefined) {
+      user.discount = discount;
+    }
+
+    // Save the updated user
+    await user.save();
+
+    res.status(200).json({
+      message: 'User updated successfully',
+      user: {
+        id: user.id,
+        commission: user.commission,
+        discount: user.discount,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      message: 'Error updating commission or discount',
       error: error.message,
     });
   }
