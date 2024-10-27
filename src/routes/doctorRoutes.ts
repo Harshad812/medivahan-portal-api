@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import passport from '../middleware/passport';
-import { doctorDetails, getAllDoctor, getPrescriptionByDoctor, updateCommissionOrDiscount } from '../controllers/doctorController';
+import  { doctorDetails, getAllDoctor, getPrescriptionByDoctor, getTotalPaidAndTotalDueByUser, updateCommissionOrDiscount } from '../controllers/doctorController';
 
 const router = Router();
 
@@ -21,7 +21,9 @@ router.get(
   getPrescriptionByDoctor
 );
 
-router.put('/doctore/discount-commision-update',updateCommissionOrDiscount)
+router.get('/doctor/total-paid-and-total-due/:user_id',  passport.authenticate('jwt', { session: false }),getTotalPaidAndTotalDueByUser)
+
+router.put('/doctor/discount-commision-update',updateCommissionOrDiscount)
 
 
 export default router;
