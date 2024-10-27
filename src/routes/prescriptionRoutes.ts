@@ -4,8 +4,10 @@ import {
   createBillAndUpdatePrescription,
   createPrescription,
   getAllPrescription,
+  getPrescriptionByDeliveryBoy,
   getPrescriptionsByFilters,
   getPrescriptionStatusCount,
+  getPrescriptionStatusCountByDeliveryBoy,
   getPrescriptionStatusCountByDoctor,
   prescriptionDetails,
   prescriptionList,
@@ -25,6 +27,9 @@ router.get(
 );
 
 router.get(
+  '/delivery-boy/prescription/delivery-boy',  passport.authenticate('jwt', { session: false }),getPrescriptionByDeliveryBoy)
+
+router.get(
   '/dashboard/all-prescription-count',
   passport.authenticate('jwt', { session: false }),
   getPrescriptionStatusCount
@@ -35,6 +40,12 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   getPrescriptionStatusCountByDoctor
 );
+
+router.get(
+  '/dashboard/all-prescription-count-by-delivery-boy/:d_id',
+  passport.authenticate('jwt', { session: false }),
+  getPrescriptionStatusCountByDeliveryBoy
+)
 
 router.put(
   '/dashboard/prescriptions/update-status',
