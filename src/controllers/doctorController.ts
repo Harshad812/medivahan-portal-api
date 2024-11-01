@@ -26,7 +26,6 @@ export const doctorDetails = async (req: Request, res: Response) => {
       include: [
         {
           model: Clinic,
-          as: 'Clinics',
         },
       ],
     });
@@ -253,6 +252,7 @@ export const getPrescriptionByDoctor = async (req: Request, res: Response) => {
     const prescription = await Prescription.findAndCountAll({
       attributes: [
         'prescription_id',
+        'pr_id',
         'patient_name',
         'mobile',
         'status',
@@ -325,17 +325,15 @@ export const getTotalPaidAndTotalDueByUser = async (
   try {
     // Retrieve user's commission and discount values
     const user = await User.findByPk(userId, {
-      attributes: ['commission', 'discount'],
+      attributes: ['commission'],
     });
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Ensure commission and discount are not undefined or null, set default if necessary
-    const doctorCommission = user.commission ? user.commission / 100 : 0; // Default to 0 if undefined or null
-    const patientDiscount = user.discount ? user.discount / 100 : 0; // Default to 0 if undefined or null
-    const totalReduction = doctorCommission + patientDiscount;
+    // Ensure commission is not undefined or null; set default if necessary
+    const doctorCommission = user.commission ? user.commission / 100 : 0; // Convert to decimal
 
     // Calculate total due for delivered prescriptions
     const totalDueResult: any = await Prescription.findAll({
@@ -352,7 +350,7 @@ export const getTotalPaidAndTotalDueByUser = async (
       raw: true,
     });
     const totalDue = totalDueResult[0]?.totalDue || 0;
-    const payableDue = totalDue * (1 - totalReduction);
+    const payableDue = totalDue * doctorCommission; // Calculate commission on total due
 
     // Calculate total paid for closed prescriptions
     const totalPaidResult: any = await Prescription.findAll({
@@ -369,13 +367,13 @@ export const getTotalPaidAndTotalDueByUser = async (
       raw: true,
     });
     const totalPaid = totalPaidResult[0]?.totalPaid || 0;
-    const payablePaid = totalPaid * (1 - totalReduction);
+    const payablePaid = totalPaid * doctorCommission; // Calculate commission on total paid
 
     res.status(200).json({
       totalPaid,
       totalDue,
-      payableDue, // Payable amount after reductions for 'delivered' status
-      payablePaid, // Payable amount after reductions for 'closed' status
+      payableDue, // Commission amount for 'delivered' prescriptions
+      payablePaid, // Commission amount for 'closed' prescriptions
     });
   } catch (error: any) {
     res.status(500).json({

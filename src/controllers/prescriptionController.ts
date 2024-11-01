@@ -439,6 +439,7 @@ export const getAllPrescription = async (req: Request, res: Response) => {
     const prescription = await Prescription.findAndCountAll({
       attributes: [
         'prescription_id',
+        'pr_id',
         'patient_name',
         'mobile',
         'status',
@@ -579,6 +580,7 @@ export const createBillAndUpdatePrescription = async (
       prescription.bill_id = bill.bill_id;
       prescription.deliveryboy_id =
         deliveryboy_id || prescription.deliveryboy_id;
+      prescription.status = 'dispatch';
       await prescription.save();
 
       res.status(200).json({
@@ -754,6 +756,7 @@ export const getPrescriptionByDeliveryBoy = async (
     const prescription = await Prescription.findAndCountAll({
       attributes: [
         'prescription_id',
+        'pr_id',
         'patient_name',
         'mobile',
         'address',
@@ -846,7 +849,8 @@ export const getPrescriptionStatusCountByDeliveryBoy = async (
 
     const response = {
       totalPrescriptions,
-      closedPrescriptions: statusCountMap['closed'] || 0,
+      dispatchPrescriptions: statusCountMap['dispatch'] || 0,
+      returnPrescriptions: statusCountMap['return'] || 0,
       deliveredPrescriptions: statusCountMap['delivered'] || 0,
     };
 
@@ -937,6 +941,7 @@ export const getPrescriptionForFinance = async (
     const prescription = await Prescription.findAndCountAll({
       attributes: [
         'prescription_id',
+        'pr_id',
         'patient_name',
         'mobile',
         'status',

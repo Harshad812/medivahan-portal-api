@@ -38,8 +38,6 @@ class Prescription
   public city?: string;
   public near_by?: string;
   public status?: string;
-  public bill_number?: string;
-  public total_bill?: number;
   public bill_id?: number;
   public deliveryboy_id?: number;
 

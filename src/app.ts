@@ -8,6 +8,7 @@ import dashboardRoutes from './routes/dashboardRoutes';
 import deliveryBoyRoutes from './routes/deliveryBoyRoutes';
 import doctorRoutes from './routes/doctorRoutes';
 import notificationRoutes from './routes/notificationRoutes';
+import financeRoutes from './routes/financeRoutes';
 import passport from './middleware/passport';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -54,6 +55,7 @@ const startServer = async () => {
     app.use('/api', deliveryBoyRoutes);
     app.use('/api', doctorRoutes);
     app.use('/api/notifications', notificationRoutes);
+    app.use('/api', financeRoutes);
     app.use('/', (req, res) => {
       res.send('Api started..!');
     });
