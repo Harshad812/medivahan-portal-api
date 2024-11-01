@@ -12,25 +12,23 @@ User.hasMany(Clinic, { foreignKey: 'user_id' });
 Prescription.belongsTo(User, { foreignKey: 'user_id' });
 User.hasMany(Prescription, { foreignKey: 'user_id' });
 
-
 export const doctorDetails = async (req: Request, res: Response) => {
   const userId = parseInt(req.params.user_id, 10);
-  
 
   try {
     const user = await User.findOne({
       where: {
-        id: userId 
+        id: userId,
       },
       attributes: {
-        exclude: ['password'] 
+        exclude: ['password'],
       },
       include: [
         {
           model: Clinic,
-          as: 'Clinics'
-        }
-      ]
+          as: 'Clinics',
+        },
+      ],
     });
 
     if (!user) {
@@ -184,7 +182,7 @@ export const getPrescriptionByDoctor = async (req: Request, res: Response) => {
       search = '',
       status = '',
       filter = '',
-      user_id = '' // Add user_id to query params
+      user_id = '', // Add user_id to query params
     } = req.query;
 
     const offset = (Number(page) - 1) * Number(limit);
@@ -281,14 +279,15 @@ export const getPrescriptionByDoctor = async (req: Request, res: Response) => {
     }
 
     // Calculate total discount and commission for each prescription
-    const prescriptionData = prescription.rows.map((item:any) => {
+    const prescriptionData = prescription.rows.map((item: any) => {
       const totalBill = item?.Bill?.total_bill ?? 0; // Fetch total_bill
       const discountPercent = item?.User?.discount ?? 10; // Fetch discount
       const commissionPercent = item?.User?.commission ?? 10; // Fetch commission
 
-
       const discountAmount = (totalBill * (discountPercent / 100)).toFixed(2); // Calculate discount amount
-      const commissionAmount = (totalBill * (commissionPercent / 100)).toFixed(2); // Calculate commission amount
+      const commissionAmount = (totalBill * (commissionPercent / 100)).toFixed(
+        2
+      ); // Calculate commission amount
 
       return {
         ...item.toJSON(), // Spread the existing item data
@@ -317,9 +316,10 @@ export const getPrescriptionByDoctor = async (req: Request, res: Response) => {
   }
 };
 
-
-
-export const getTotalPaidAndTotalDueByUser = async (req: Request, res: Response) => {
+export const getTotalPaidAndTotalDueByUser = async (
+  req: Request,
+  res: Response
+) => {
   const userId = parseInt(req.params.user_id, 10);
 
   try {
@@ -334,11 +334,11 @@ export const getTotalPaidAndTotalDueByUser = async (req: Request, res: Response)
 
     // Ensure commission and discount are not undefined or null, set default if necessary
     const doctorCommission = user.commission ? user.commission / 100 : 0; // Default to 0 if undefined or null
-    const patientDiscount = user.discount ? user.discount / 100 : 0;     // Default to 0 if undefined or null
+    const patientDiscount = user.discount ? user.discount / 100 : 0; // Default to 0 if undefined or null
     const totalReduction = doctorCommission + patientDiscount;
 
     // Calculate total due for delivered prescriptions
-    const totalDueResult:any = await Prescription.findAll({
+    const totalDueResult: any = await Prescription.findAll({
       where: { user_id: userId, status: 'delivered' },
       include: [
         {
@@ -355,7 +355,7 @@ export const getTotalPaidAndTotalDueByUser = async (req: Request, res: Response)
     const payableDue = totalDue * (1 - totalReduction);
 
     // Calculate total paid for closed prescriptions
-    const totalPaidResult:any = await Prescription.findAll({
+    const totalPaidResult: any = await Prescription.findAll({
       where: { user_id: userId, status: 'closed' },
       include: [
         {
@@ -374,7 +374,7 @@ export const getTotalPaidAndTotalDueByUser = async (req: Request, res: Response)
     res.status(200).json({
       totalPaid,
       totalDue,
-      payableDue,  // Payable amount after reductions for 'delivered' status
+      payableDue, // Payable amount after reductions for 'delivered' status
       payablePaid, // Payable amount after reductions for 'closed' status
     });
   } catch (error: any) {
@@ -385,10 +385,10 @@ export const getTotalPaidAndTotalDueByUser = async (req: Request, res: Response)
   }
 };
 
-
-  
-
-export const updateCommissionOrDiscount = async (req: Request, res: Response) => {
+export const updateCommissionOrDiscount = async (
+  req: Request,
+  res: Response
+) => {
   const { id, commission, discount } = req.body;
 
   try {
@@ -403,7 +403,7 @@ export const updateCommissionOrDiscount = async (req: Request, res: Response) =>
     if (commission !== undefined) {
       user.commission = commission;
     }
-    
+
     if (discount !== undefined) {
       user.discount = discount;
     }
@@ -426,4 +426,3 @@ export const updateCommissionOrDiscount = async (req: Request, res: Response) =>
     });
   }
 };
-

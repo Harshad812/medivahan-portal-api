@@ -9,6 +9,7 @@ import { uploadImageBufferToS3 } from '../utils/uploadImageBufferToS3';
 import User from '../models/user';
 import Bill from '../models/bill';
 import sequelize from 'sequelize';
+import { createNotification } from '../utils/notificationUtil';
 
 const JWT_SECRET = 'your_jwt_secret';
 
@@ -106,6 +107,14 @@ export const createPrescription = async (req: Request, res: Response) => {
         prescriptions: uploadedPrescriptions,
         user_id: userId,
       });
+
+      if (newPrescription) {
+        await createNotification(
+          'New prescription added',
+          newPrescription.user_id,
+          res
+        );
+      }
 
       res.status(201).json({
         message: 'Create prescription successfully',
@@ -474,7 +483,6 @@ export const getAllPrescription = async (req: Request, res: Response) => {
 export const updatePrescriptionStatus = async (req: Request, res: Response) => {
   const { ids, status } = req.body; // Extract ids and status from request body
 
-  // Validate input
   if (!Array.isArray(ids) || ids.length === 0 || !status) {
     return res.status(400).json({
       message: 'Invalid request. Please provide an array of IDs and a status.',
@@ -482,10 +490,9 @@ export const updatePrescriptionStatus = async (req: Request, res: Response) => {
   }
 
   try {
-    // Update prescriptions with the given IDs
     const [updatedCount] = await Prescription.update(
-      { status }, // New status to set
-      { where: { prescription_id: ids } } // Filter by prescription IDs
+      { status },
+      { where: { prescription_id: ids } }
     );
 
     if (updatedCount === 0) {
@@ -612,18 +619,15 @@ export const getPrescriptionStatusCount = async (
       group: 'status',
     });
 
-    
     const statusCountMap: { [key: string]: number } = {};
 
-    
     statusCounts.forEach((item: any) => {
       statusCountMap[item.status] = item.getDataValue('count');
     });
 
-    
     const result = possibleStatuses.map((status) => ({
       status,
-      count: statusCountMap[status] || 0,   
+      count: statusCountMap[status] || 0,
     }));
 
     return res.status(200).json(result);
@@ -644,22 +648,19 @@ export const getPrescriptionStatusCountByDoctor = async (
         'status',
         [sequelize.fn('COUNT', sequelize.col('status')), 'count'],
       ],
-      where:{user_id},
+      where: { user_id },
       group: 'status',
     });
 
-    
     const statusCountMap: { [key: string]: number } = {};
 
-    
     statusCounts.forEach((item: any) => {
       statusCountMap[item.status] = item.getDataValue('count');
     });
 
-    
     const result = possibleStatuses.map((status) => ({
       status,
-      count: statusCountMap[status] || 0,   
+      count: statusCountMap[status] || 0,
     }));
 
     return res.status(200).json(result);
@@ -669,7 +670,10 @@ export const getPrescriptionStatusCountByDoctor = async (
   }
 };
 
-export const getPrescriptionByDeliveryBoy = async (req: Request, res: Response) => {
+export const getPrescriptionByDeliveryBoy = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const {
       page = 1,
@@ -677,7 +681,7 @@ export const getPrescriptionByDeliveryBoy = async (req: Request, res: Response) 
       search = '',
       status = '',
       filter = '',
-      d_id = '' // Add user_id to query params
+      d_id = '', // Add user_id to query params
     } = req.query;
 
     const offset = (Number(page) - 1) * Number(limit);
@@ -711,7 +715,7 @@ export const getPrescriptionByDeliveryBoy = async (req: Request, res: Response) 
     }
 
     if (d_id) {
-      searchCondition[Op.and].push({ deliveryboy_id: d_id }); 
+      searchCondition[Op.and].push({ deliveryboy_id: d_id });
     }
 
     let order: any[] = [['updatedAt', 'DESC']]; // Default sorting by last update
@@ -777,14 +781,15 @@ export const getPrescriptionByDeliveryBoy = async (req: Request, res: Response) 
     }
 
     // Calculate total discount and commission for each prescription
-    const prescriptionData = prescription.rows.map((item:any) => {
+    const prescriptionData = prescription.rows.map((item: any) => {
       const totalBill = item?.Bill?.total_bill ?? 0; // Fetch total_bill
       const discountPercent = item?.User?.discount ?? 10; // Fetch discount
       const commissionPercent = item?.User?.commission ?? 10; // Fetch commission
 
-
       const discountAmount = (totalBill * (discountPercent / 100)).toFixed(2); // Calculate discount amount
-      const commissionAmount = (totalBill * (commissionPercent / 100)).toFixed(2); // Calculate commission amount
+      const commissionAmount = (totalBill * (commissionPercent / 100)).toFixed(
+        2
+      ); // Calculate commission amount
 
       return {
         ...item.toJSON(), // Spread the existing item data
@@ -817,14 +822,14 @@ export const getPrescriptionStatusCountByDeliveryBoy = async (
   req: Request,
   res: Response
 ) => {
-  const deliveryboy_id = parseInt(req.params.d_id, 10); 
+  const deliveryboy_id = parseInt(req.params.d_id, 10);
   try {
     const statusCounts = await Prescription.findAll({
       attributes: [
         'status',
         [sequelize.fn('COUNT', sequelize.col('status')), 'count'],
       ],
-      where: { deliveryboy_id }, 
+      where: { deliveryboy_id },
       group: 'status',
     });
 
@@ -834,7 +839,10 @@ export const getPrescriptionStatusCountByDeliveryBoy = async (
       statusCountMap[item.status] = item.getDataValue('count');
     });
 
-    const totalPrescriptions = statusCounts.reduce((total, item:any) => total + item.getDataValue('count'), 0);
+    const totalPrescriptions = statusCounts.reduce(
+      (total, item: any) => total + item.getDataValue('count'),
+      0
+    );
 
     const response = {
       totalPrescriptions,
@@ -849,7 +857,10 @@ export const getPrescriptionStatusCountByDeliveryBoy = async (
   }
 };
 
-export const getPrescriptionForFinance = async (req: Request, res: Response) => {
+export const getPrescriptionForFinance = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const {
       page = 1,
@@ -884,9 +895,9 @@ export const getPrescriptionForFinance = async (req: Request, res: Response) => 
     // Status filter
     if (status && status !== 'all') {
       searchCondition[Op.and].push({ status });
-    }else{
+    } else {
       searchCondition[Op.and].push({
-        status: { [Op.in]: ['closed', 'delivered'] }
+        status: { [Op.in]: ['closed', 'delivered'] },
       });
     }
 
@@ -952,14 +963,15 @@ export const getPrescriptionForFinance = async (req: Request, res: Response) => 
     }
 
     // Calculate total discount and commission for each prescription
-    const prescriptionData = prescription.rows.map((item:any) => {
+    const prescriptionData = prescription.rows.map((item: any) => {
       const totalBill = item?.Bill?.total_bill ?? 0; // Fetch total_bill
       const discountPercent = item?.User?.discount ?? 10; // Fetch discount
       const commissionPercent = item?.User?.commission ?? 10; // Fetch commission
 
-
       const discountAmount = (totalBill * (discountPercent / 100)).toFixed(2); // Calculate discount amount
-      const commissionAmount = (totalBill * (commissionPercent / 100)).toFixed(2); // Calculate commission amount
+      const commissionAmount = (totalBill * (commissionPercent / 100)).toFixed(
+        2
+      ); // Calculate commission amount
 
       return {
         ...item.toJSON(), // Spread the existing item data

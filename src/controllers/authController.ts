@@ -5,6 +5,7 @@ import User from '../models/user';
 import multiparty from 'multiparty';
 import fs from 'fs';
 import { uploadImageBufferToS3 } from '../utils/uploadImageBufferToS3';
+import { createNotification } from '../utils/notificationUtil';
 
 const JWT_SECRET = 'your_jwt_secret';
 const JWT_EXPIRES_IN = '7d';
@@ -76,6 +77,10 @@ export const register = async (req: Request, res: Response) => {
       designation,
       password: hashedPassword,
     });
+
+    if (newUser) {
+      await createNotification('New doctor added', newUser.id, res);
+    }
 
     const userResponse = {
       firstname: newUser.firstname,
