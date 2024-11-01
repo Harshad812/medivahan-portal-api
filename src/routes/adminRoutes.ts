@@ -5,6 +5,7 @@ import {
   AdminLogin,
   AdminRegister,
   ChangePassword,
+  resetPassword,
   sendOtp,
   verifyOtp,
 } from '../controllers/adminController';
@@ -22,6 +23,7 @@ router.post('/admin-register', AdminRegister);
 router.post('/admin-login', AdminLogin);
 router.post('/admin-send-otp', sendOtp);
 router.post('/admin-verify-otp', verifyOtp);
+router.post('/admin-reset-password', resetPassword);
 router.post(
   '/admin-change-password',
   passport.authenticate('jwt', { session: false }),

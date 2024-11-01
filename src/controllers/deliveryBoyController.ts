@@ -8,13 +8,17 @@ DeliveryBoy.hasMany(Prescription, { foreignKey: 'deliveryboy_id' });
 
 export const deliveryBoyList = async (req: Request, res: Response) => {
   const accessToken = req.headers.authorization?.split(' ')[1];
+  const search = req.query.search as string;
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 12;
+  const offset = (page - 1) * limit;
 
   if (!accessToken) {
     return res.status(401).json({ message: 'Access token missing' });
   }
 
   try {
-    const deliveryBoy = await DeliveryBoy.findAll({
+    const deliveryBoy = await DeliveryBoy.findAndCountAll({
       attributes: {
         include: [
           [
@@ -35,12 +39,32 @@ export const deliveryBoyList = async (req: Request, res: Response) => {
           required: false,
         },
       ],
+      where: search
+        ? {
+            [sequelize.Op.or]: [
+              { name: { [sequelize.Op.like]: `%${search}%` } },
+              sequelize.where(
+                sequelize.literal(`(
+                  SELECT COUNT(*)
+                  FROM prescription AS p
+                  WHERE p.deliveryboy_id = DeliveryBoy.d_id
+                  AND p.status = 'dispatch'
+                )`),
+                { [sequelize.Op.gt]: 0 }
+              ),
+            ],
+          }
+        : {},
+      limit,
+      offset,
     });
 
     res.status(200).json({
       message: 'Delivery boy retrieved successfully',
-      deliveryBoy,
-      count: deliveryBoy.length,
+      deliveryBoy: deliveryBoy.rows,
+      count: deliveryBoy.count,
+      totalPages: Math.ceil(deliveryBoy.count / limit),
+      currentPage: page,
     });
   } catch (error: any) {
     if (error.name === 'JsonWebTokenError') {

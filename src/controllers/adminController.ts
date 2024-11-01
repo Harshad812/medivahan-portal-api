@@ -127,7 +127,7 @@ export const ChangePassword = async (req: Request, res: Response) => {
 };
 
 export const resetPassword = async (req: Request, res: Response) => {
-  const { username, newPassword } = req.body;
+  const { username, currentPassword, newPassword } = req.body;
 
   try {
     const admin = await Admin.findOne({ where: { username } });
@@ -136,13 +136,19 @@ export const resetPassword = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Admin not found' });
     }
 
+    const isMatch = await bcrypt.compare(currentPassword, admin.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     admin.password = hashedPassword;
+
     await admin.save();
 
-    res.json({ message: 'Password reset successfully' });
+    res.json({ message: 'Password updated successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error resetting password', error });
+    res.status(500).json({ message: 'Error reset password', error });
   }
 };
 
