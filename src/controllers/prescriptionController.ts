@@ -433,7 +433,7 @@ export const getAllPrescription = async (req: Request, res: Response) => {
         order = [['updatedAt', 'DESC']]; // Sort by last update (most recent first)
         break;
       default:
-        order = [['updatedAt', 'DESC']]; // Default sort
+        order = [['createdAt', 'DESC']]; // Default sort
     }
 
     const prescription = await Prescription.findAndCountAll({
@@ -720,7 +720,7 @@ export const getPrescriptionByDeliveryBoy = async (
       searchCondition[Op.and].push({ deliveryboy_id: d_id });
     }
 
-    let order: any[] = [['updatedAt', 'DESC']]; // Default sorting by last update
+    let order: any[] = [['createdAt', 'DESC']]; // Default sorting by last update
 
     // Filter conditions
     switch (filter) {
@@ -905,7 +905,7 @@ export const getPrescriptionForFinance = async (
       });
     }
 
-    let order: any[] = [['updatedAt', 'DESC']]; // Default sorting by last update
+    let order: any[] = [['createdAt', 'DESC']]; // Default sorting by last update
 
     // Filter conditions
     switch (filter) {
