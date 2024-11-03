@@ -45,6 +45,39 @@ class Prescription
   public readonly updatedAt!: Date;
 }
 
+async function generatePrescriptionId(prescription: Prescription, retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const transaction = await sequelize.transaction();
+    try {
+      const lastPrescription = await Prescription.findOne({
+        order: [['pr_id', 'DESC']],
+        lock: transaction.LOCK.UPDATE,
+        transaction,
+      });
+
+      let nextId = 'PR0001';
+
+      if (lastPrescription) {
+        const lastIdNumber = parseInt(lastPrescription.pr_id.slice(2), 10);
+        const newIdNumber = lastIdNumber + 1;
+        nextId = `PR${newIdNumber.toString().padStart(4, '0')}`;
+      }
+
+      prescription.pr_id = nextId;
+
+      await transaction.commit();
+      break; // Exit loop if successful
+    } catch (error: any) {
+      await transaction.rollback();
+      if (error.original?.code === 'ER_LOCK_DEADLOCK' && attempt < retries) {
+        console.warn(`Deadlock detected. Retrying attempt ${attempt}...`);
+        continue;
+      }
+      throw error; // Throw error if it's not a deadlock or retries exhausted
+    }
+  }
+}
+
 Prescription.init(
   {
     prescription_id: {
@@ -123,24 +156,8 @@ Prescription.init(
     sequelize,
     tableName: 'prescription',
     hooks: {
-      // This hook will run before the `create` operation
       beforeCreate: async (prescription) => {
-        const lastPrescription = await Prescription.findOne({
-          order: [['pr_id', 'DESC']],
-        });
-
-        let nextId = 'PR0001'; // Default ID for the first record
-
-        if (lastPrescription) {
-          // Extract the numeric part of the last ID and increment it
-          const lastIdNumber = parseInt(lastPrescription?.pr_id?.slice(2), 10); // Remove 'PR' prefix and parse number
-          const newIdNumber = lastIdNumber + 1;
-
-          // Format the new ID, ensuring it's zero-padded to 4 digits
-          nextId = `PR${newIdNumber.toString().padStart(4, '0')}`;
-        }
-
-        prescription.pr_id = nextId;
+        await generatePrescriptionId(prescription);
       },
     },
   }
