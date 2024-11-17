@@ -57,6 +57,7 @@ export const getAllDoctor = async (req: Request, res: Response) => {
       search = '',
       status = '',
       filter = '',
+      type = '',
     } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
 
@@ -71,6 +72,15 @@ export const getAllDoctor = async (req: Request, res: Response) => {
           { lastname: { [Op.like]: `%${search}%` } },
         ],
       });
+    }
+
+    if (type) {
+      if (type === 'new') {
+        searchCondition[Op.and].push({
+          discount: 0,
+          commission: 0,
+        });
+      }
     }
 
     if (status) {
