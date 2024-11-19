@@ -2,9 +2,15 @@ import { Request, Response } from 'express';
 import Prescription from '../models/prescription';
 import User from '../models/user';
 import { Op } from 'sequelize';
+import Bill from '../models/bill';
+import DeliveryBoy from '../models/delivery_boy';
 
 Prescription.belongsTo(User, { foreignKey: 'user_id' });
+Prescription.belongsTo(Bill, { foreignKey: 'bill_id' });
+Prescription.belongsTo(Bill, { foreignKey: 'deliveryboy_id' });
 User.hasMany(Prescription, { foreignKey: 'user_id' });
+Bill.hasMany(Prescription, { foreignKey: 'bill_id' });
+DeliveryBoy.hasMany(Prescription, { foreignKey: 'deliveryboy_id' });
 
 export const recentPrescriptions = async (req: Request, res: Response) => {
   const { limit = 8 } = req.query;
@@ -47,17 +53,13 @@ export const recentPrescriptions = async (req: Request, res: Response) => {
   }
 };
 
-
 export const requireDetailsDoctorList = async (req: Request, res: Response) => {
   const { limit = 10 } = req.query;
   try {
     const doctor = await User.findAndCountAll({
       attributes: ['id', 'firstname', 'lastname', 'profileImage'],
       where: {
-        [Op.or]: [
-          { discount: 0 },
-          { commission: 0 }
-        ]
+        [Op.or]: [{ discount: 0 }, { commission: 0 }],
       },
       limit: Number(limit),
     });
@@ -81,7 +83,6 @@ export const requireDetailsDoctorList = async (req: Request, res: Response) => {
     });
   }
 };
-
 
 export const getPrescriptionAndDoctorCount = async (
   req: Request,

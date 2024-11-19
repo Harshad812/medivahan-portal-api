@@ -10,13 +10,16 @@ import User from '../models/user';
 import Bill from '../models/bill';
 import sequelize from 'sequelize';
 import { createNotification } from '../utils/notificationUtil';
+import DeliveryBoy from '../models/delivery_boy';
 
 const JWT_SECRET = 'your_jwt_secret';
 
 Prescription.belongsTo(User, { foreignKey: 'user_id' });
 Prescription.belongsTo(Bill, { foreignKey: 'bill_id' });
+Prescription.belongsTo(Bill, { foreignKey: 'deliveryboy_id' });
 User.hasMany(Prescription, { foreignKey: 'user_id' });
 Bill.hasMany(Prescription, { foreignKey: 'bill_id' });
+DeliveryBoy.hasMany(Prescription, { foreignKey: 'deliveryboy_id' });
 
 export const prescriptionDetails = async (req: Request, res: Response) => {
   const prescription_id = parseInt(req.params.id, 10);

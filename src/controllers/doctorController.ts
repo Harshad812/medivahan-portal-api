@@ -5,12 +5,17 @@ import Clinic from '../models/clinic';
 import Prescription from '../models/prescription';
 import Bill from '../models/bill';
 import sequelize from 'sequelize';
+import DeliveryBoy from '../models/delivery_boy';
 
 Clinic.belongsTo(User, { foreignKey: 'id' });
 User.hasMany(Clinic, { foreignKey: 'user_id' });
 
 Prescription.belongsTo(User, { foreignKey: 'user_id' });
+Prescription.belongsTo(Bill, { foreignKey: 'bill_id' });
+Prescription.belongsTo(Bill, { foreignKey: 'deliveryboy_id' });
 User.hasMany(Prescription, { foreignKey: 'user_id' });
+Bill.hasMany(Prescription, { foreignKey: 'bill_id' });
+DeliveryBoy.hasMany(Prescription, { foreignKey: 'deliveryboy_id' });
 
 export const doctorDetails = async (req: Request, res: Response) => {
   const userId = parseInt(req.params.user_id, 10);
