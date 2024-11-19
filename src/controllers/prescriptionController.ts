@@ -16,7 +16,7 @@ const JWT_SECRET = 'your_jwt_secret';
 
 Prescription.belongsTo(User, { foreignKey: 'user_id' });
 Prescription.belongsTo(Bill, { foreignKey: 'bill_id' });
-Prescription.belongsTo(Bill, { foreignKey: 'deliveryboy_id' });
+Prescription.belongsTo(DeliveryBoy, { foreignKey: 'deliveryboy_id' });
 User.hasMany(Prescription, { foreignKey: 'user_id' });
 Bill.hasMany(Prescription, { foreignKey: 'bill_id' });
 DeliveryBoy.hasMany(Prescription, { foreignKey: 'deliveryboy_id' });
