@@ -125,7 +125,7 @@ Prescription.init(
       type: DataTypes.ENUM(
         'open',
         'preparing',
-        'decline',
+        'declined',
         'dispatch',
         'delivered',
         'return',

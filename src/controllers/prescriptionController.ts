@@ -226,7 +226,7 @@ export const prescriptionList = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Prescription not found' });
     }
 
-    const allStatuses = ['received', 'closed', 'delivered', 'decline', 'open'];
+    const allStatuses = ['received', 'closed', 'delivered', 'declined', 'open'];
 
     const statusCounts = await Prescription.findAll({
       attributes: [
@@ -601,7 +601,7 @@ export const createBillAndUpdatePrescription = async (
 const possibleStatuses = [
   'open',
   'preparing',
-  'decline',
+  'declined',
   'dispatch',
   'delivered',
   'return',
