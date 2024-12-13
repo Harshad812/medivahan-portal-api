@@ -194,6 +194,15 @@ export const updatePrescriptionDetails = async (
       // Save the updated prescription
       await prescription.save();
 
+      if (status[0] === 'delivered' || status[0] === 'closed') {
+        console.log('status123', status);
+        await createNotification(
+          'Prescription status change to ' + prescription.status,
+          prescription.user_id,
+          res
+        );
+      }
+
       res
         .status(200)
         .json({ message: 'prescription details updated successfully' });
@@ -503,6 +512,26 @@ export const updatePrescriptionStatus = async (req: Request, res: Response) => {
       return res
         .status(404)
         .json({ message: 'No prescriptions found with the provided IDs.' });
+    }
+
+    for (const id of ids) {
+      console.log('Processing ID:', id);
+      const prescription = await Prescription.findByPk(id);
+      if (!prescription) {
+        return res
+          .status(404)
+          .json({ message: `Prescription with ID ${id} not found` });
+      }
+
+      try {
+        await createNotification(
+          'Prescription status change to ' + status,
+          prescription.user_id,
+          res
+        );
+      } catch (error) {
+        console.error(`Failed to create notification for ID ${id}:`, error);
+      }
     }
 
     res.status(200).json({

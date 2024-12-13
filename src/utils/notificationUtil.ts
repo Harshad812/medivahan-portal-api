@@ -24,7 +24,8 @@ export const createNotification = async (
     await newNotification.save();
 
     // Respond with the created notification
-    return res.status(201).json({ notification: newNotification });
+    // return res.status(201).json({ notification: newNotification });
+    console.log('Notification created successfully');
   } catch (error) {
     console.error('Error creating notification:', error);
     return res
