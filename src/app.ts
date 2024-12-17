@@ -11,7 +11,7 @@ import notificationRoutes from './routes/notificationRoutes';
 import financeRoutes from './routes/financeRoutes';
 import passport from './middleware/passport';
 import dotenv from 'dotenv';
-import cors from 'cors';
+// import cors from 'cors';
 // import { createDatabaseIfNotExists } from './scripts/initDatabase';
 
 // Load environment variables from .env file
@@ -19,18 +19,18 @@ dotenv.config();
 
 const app = express();
 
-const corsOptions = {
-  origin: 'http://localhost:3000',
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 200,
-  preflightContinue: false,
-};
+// const corsOptions = {
+//   origin: 'http://localhost:3000',
+//   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   optionsSuccessStatus: 200,
+//   preflightContinue: false,
+// };
 
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
 
 // Handle preflight requests
-app.options('*', cors(corsOptions));
+// app.options('*', cors(corsOptions));
 
 const PORT = process.env.PORT || 8000;
 
