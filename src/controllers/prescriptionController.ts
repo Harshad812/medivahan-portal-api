@@ -16,10 +16,16 @@ const JWT_SECRET = 'your_jwt_secret';
 
 Prescription.belongsTo(User, { foreignKey: 'user_id' });
 Prescription.belongsTo(Bill, { foreignKey: 'bill_id' });
-Prescription.belongsTo(DeliveryBoy, { foreignKey: 'deliveryboy_id' });
+Prescription.belongsTo(DeliveryBoy, {
+  foreignKey: 'deliveryboy_id', // Foreign key in Prescription table
+  targetKey: 'd_id', // Primary key in DeliveryBoy table
+});
 User.hasMany(Prescription, { foreignKey: 'user_id' });
 Bill.hasMany(Prescription, { foreignKey: 'bill_id' });
-DeliveryBoy.hasMany(Prescription, { foreignKey: 'deliveryboy_id' });
+DeliveryBoy.hasMany(Prescription, {
+  foreignKey: 'deliveryboy_id', // Foreign key in Prescription table
+  sourceKey: 'd_id', // Primary key in DeliveryBoy table
+});
 
 export const prescriptionDetails = async (req: Request, res: Response) => {
   const prescription_id = parseInt(req.params.id, 10);
