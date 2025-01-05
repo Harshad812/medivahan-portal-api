@@ -116,7 +116,7 @@ export const createPrescription = async (req: Request, res: Response) => {
         near_by: near_by[0],
         prescriptions: uploadedPrescriptions,
         user_id: userId,
-        prescription_note: prescription_note[0],
+        prescription_note: prescription_note[0] ? prescription_note[0] : '',
         admin_note: '',
         commission_amount: 0,
         discount_amount: 0,
