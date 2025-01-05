@@ -17,6 +17,8 @@ interface PrescriptionAttributes {
   status?: string;
   bill_id?: number;
   deliveryboy_id?: number;
+  prescription_note: string;
+  admin_note?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -40,6 +42,8 @@ class Prescription
   public status?: string;
   public bill_id?: number;
   public deliveryboy_id?: number;
+  public prescription_note!: string;
+  public admin_note?: string;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -149,6 +153,14 @@ Prescription.init(
         model: DeliveryBoy,
         key: 'd_id',
       },
+    },
+    prescription_note: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    admin_note: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
   },
 

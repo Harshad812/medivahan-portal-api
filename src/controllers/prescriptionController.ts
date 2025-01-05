@@ -82,7 +82,8 @@ export const createPrescription = async (req: Request, res: Response) => {
     if (!files || !files.images || files.images.length === 0) {
       return res.status(400).send('No file uploaded.');
     }
-    const { patient_name, mobile, address, city, near_by } = fields;
+    const { patient_name, mobile, address, city, near_by, prescription_note } =
+      fields;
 
     try {
       const decodedToken: any = jwt.verify(accessToken, JWT_SECRET);
@@ -115,6 +116,8 @@ export const createPrescription = async (req: Request, res: Response) => {
         near_by: near_by[0],
         prescriptions: uploadedPrescriptions,
         user_id: userId,
+        prescription_note: prescription_note[0],
+        admin_note: '',
       });
 
       if (newPrescription) {
@@ -162,7 +165,16 @@ export const updatePrescriptionDetails = async (
         return res.status(500).send('Error parsing form');
       }
 
-      const { patient_name, mobile, address, city, near_by, status } = fields;
+      const {
+        patient_name,
+        mobile,
+        address,
+        city,
+        near_by,
+        status,
+        prescription_note,
+        admin_note,
+      } = fields;
 
       const uploadedPrescriptions = [];
 
@@ -196,6 +208,12 @@ export const updatePrescriptionDetails = async (
       prescription.city = city ? city[0] : prescription?.city;
       prescription.near_by = near_by ? near_by[0] : prescription?.near_by;
       prescription.status = status ? status[0] : prescription?.status;
+      prescription.prescription_note = prescription_note
+        ? prescription_note[0]
+        : prescription.prescription_note;
+      prescription.prescription_note = prescription_note
+        ? admin_note[0]
+        : prescription.admin_note;
 
       // Save the updated prescription
       await prescription.save();
@@ -461,6 +479,8 @@ export const getAllPrescription = async (req: Request, res: Response) => {
         'patient_name',
         'mobile',
         'status',
+        'prescription_note',
+        'admin_note',
         'createdAt',
       ],
       where: searchCondition[Op.and].length ? searchCondition : {},
@@ -799,6 +819,8 @@ export const getPrescriptionByDeliveryBoy = async (
         'mobile',
         'address',
         'status',
+        'prescription_note',
+        'admin_note',
         'createdAt',
       ],
       where: searchCondition[Op.and].length ? searchCondition : {},
