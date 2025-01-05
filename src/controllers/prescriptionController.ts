@@ -18,13 +18,13 @@ Prescription.belongsTo(User, { foreignKey: 'user_id' });
 Prescription.belongsTo(Bill, { foreignKey: 'bill_id' });
 Prescription.belongsTo(DeliveryBoy, {
   foreignKey: 'deliveryboy_id', // Foreign key in Prescription table
-  targetKey: 'd_id', // Primary key in DeliveryBoy table
+  targetKey: 'deliveryboy_id', // Primary key in DeliveryBoy table
 });
 User.hasMany(Prescription, { foreignKey: 'user_id' });
 Bill.hasMany(Prescription, { foreignKey: 'bill_id' });
 DeliveryBoy.hasMany(Prescription, {
   foreignKey: 'deliveryboy_id', // Foreign key in Prescription table
-  sourceKey: 'd_id', // Primary key in DeliveryBoy table
+  sourceKey: 'deliveryboy_id', // Primary key in DeliveryBoy table
 });
 
 export const prescriptionDetails = async (req: Request, res: Response) => {
@@ -118,6 +118,8 @@ export const createPrescription = async (req: Request, res: Response) => {
         user_id: userId,
         prescription_note: prescription_note[0],
         admin_note: '',
+        commission_amount: 0,
+        discount_amount: 0,
       });
 
       if (newPrescription) {
@@ -302,7 +304,7 @@ export const prescriptionList = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid or expired token' });
     }
     res.status(500).json({
-      message: 'Error retrieving prescription details',
+      message: 'Error retrieving prescription list',
       error: error.message,
     });
   }
@@ -391,7 +393,7 @@ export const getPrescriptionsByFilters = async (
       return res.status(401).json({ message: 'Invalid or expired token' });
     }
     res.status(500).json({
-      message: 'Error retrieving prescription details',
+      message: 'Error retrieving prescription filtered list',
       error: error.message,
     });
   }
@@ -590,7 +592,14 @@ export const createBillAndUpdatePrescription = async (
     }
 
     try {
-      const prescription = await Prescription.findByPk(prescription_id);
+      const prescription: any = await Prescription.findByPk(prescription_id, {
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'discount', 'commission'],
+          },
+        ],
+      });
       if (!prescription) {
         return res.status(404).json({ message: 'Prescription not found' });
       }
@@ -601,6 +610,7 @@ export const createBillAndUpdatePrescription = async (
         deliveryboy_id,
         prescription_note,
         admin_note,
+        commission_amount,
       } = fields;
       const uploadedBills = [];
 
@@ -641,12 +651,30 @@ export const createBillAndUpdatePrescription = async (
         });
       }
 
+      const comAmt = commission_amount[0];
+
       prescription.bill_id = bill.bill_id;
       prescription.deliveryboy_id =
         deliveryboy_id || prescription.deliveryboy_id;
       prescription.status = 'dispatch';
       prescription.prescription_note = prescription_note[0] ?? '';
       prescription.admin_note = admin_note[0] ?? '';
+
+      const totalBill = total_bill[0] ?? 0;
+      const commissionPercent = prescription?.User?.commission ?? 0;
+      const discountPercent = prescription?.User?.discount ?? 0;
+
+      const commissionAmount = (totalBill * (commissionPercent / 100)).toFixed(
+        2
+      );
+      const discountAmount = (totalBill * (discountPercent / 100)).toFixed(2);
+      prescription.discount_amount = parseFloat(discountAmount);
+
+      if (commission_amount?.length) {
+        prescription.commission_amount = parseFloat(comAmt);
+      } else {
+        prescription.commission_amount = commissionAmount;
+      }
 
       await prescription.save();
 
@@ -750,7 +778,7 @@ export const getPrescriptionByDeliveryBoy = async (
       search = '',
       status = '',
       filter = '',
-      d_id = '', // Add user_id to query params
+      deliveryboy_id = '', // Add user_id to query params
     } = req.query;
 
     const offset = (Number(page) - 1) * Number(limit);
@@ -783,8 +811,8 @@ export const getPrescriptionByDeliveryBoy = async (
       searchCondition[Op.and].push({ status });
     }
 
-    if (d_id) {
-      searchCondition[Op.and].push({ deliveryboy_id: d_id });
+    if (deliveryboy_id) {
+      searchCondition[Op.and].push({ deliveryboy_id: deliveryboy_id });
     }
 
     let order: any[] = [['createdAt', 'DESC']]; // Default sorting by last update
@@ -894,7 +922,7 @@ export const getPrescriptionStatusCountByDeliveryBoy = async (
   req: Request,
   res: Response
 ) => {
-  const deliveryboy_id = parseInt(req.params.d_id, 10);
+  const deliveryboy_id = parseInt(req.params.deliveryboy_id, 10);
   try {
     const statusCounts = await Prescription.findAll({
       attributes: [
@@ -1014,6 +1042,8 @@ export const getPrescriptionForFinance = async (
         'patient_name',
         'mobile',
         'status',
+        'commission_amount',
+        'discount_amount',
         'createdAt',
       ],
       where: searchCondition[Op.and].length ? searchCondition : {},
@@ -1051,6 +1081,12 @@ export const getPrescriptionForFinance = async (
         ...item.toJSON(), // Spread the existing item data
         discountAmount: Number(discountAmount), // Add calculated discount amount
         commissionAmount: Number(commissionAmount), // Add calculated commission amount
+        commission_amount: Number(item.commission_amount)
+          ? Number(item.commission_amount)
+          : Number(commissionAmount),
+        discount_amount: Number(item.discount_amount)
+          ? Number(item.discount_amount)
+          : Number(discountAmount),
       };
     });
 

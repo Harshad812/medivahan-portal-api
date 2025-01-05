@@ -3,7 +3,7 @@ import DeliveryBoy from '../models/delivery_boy';
 import Prescription from '../models/prescription';
 import sequelize from 'sequelize';
 
-Prescription.belongsTo(DeliveryBoy, { foreignKey: 'd_id' });
+Prescription.belongsTo(DeliveryBoy, { foreignKey: 'deliveryboy_id' });
 DeliveryBoy.hasMany(Prescription, { foreignKey: 'deliveryboy_id' });
 
 export const deliveryBoyList = async (req: Request, res: Response) => {
@@ -25,7 +25,7 @@ export const deliveryBoyList = async (req: Request, res: Response) => {
             sequelize.literal(`(
               SELECT COUNT(*)
               FROM prescription AS p
-              WHERE p.deliveryboy_id = DeliveryBoy.d_id
+              WHERE p.deliveryboy_id = DeliveryBoy.deliveryboy_id
               AND p.status = 'dispatch'
             )`),
             'dispatchCount',
@@ -47,7 +47,7 @@ export const deliveryBoyList = async (req: Request, res: Response) => {
                 sequelize.literal(`(
                   SELECT COUNT(*)
                   FROM prescription AS p
-                  WHERE p.deliveryboy_id = DeliveryBoy.d_id
+                  WHERE p.deliveryboy_id = DeliveryBoy.deliveryboy_id
                   AND p.status = 'dispatch'
                 )`),
                 { [sequelize.Op.gt]: 0 }
@@ -78,7 +78,7 @@ export const deliveryBoyList = async (req: Request, res: Response) => {
 };
 
 export const deliveryBoyDetails = async (req: Request, res: Response) => {
-  const d_id = parseInt(req.params.id, 10);
+  const deliveryboy_id = parseInt(req.params.id, 10);
   const accessToken = req.headers.authorization?.split(' ')[1];
 
   if (!accessToken) {
@@ -86,7 +86,7 @@ export const deliveryBoyDetails = async (req: Request, res: Response) => {
   }
 
   try {
-    const deliveryBoy = await DeliveryBoy.findByPk(d_id);
+    const deliveryBoy = await DeliveryBoy.findByPk(deliveryboy_id);
 
     if (!deliveryBoy) {
       return res.status(404).json({ message: 'Delivery boy not found' });
@@ -136,12 +136,12 @@ export const createDeliveryBoy = async (req: Request, res: Response) => {
 };
 
 export const updateDeliveryBoy = async (req: Request, res: Response) => {
-  const d_id = parseInt(req.params.id, 10);
+  const deliveryboy_id = parseInt(req.params.id, 10);
   const { name, mobile } = req.body;
 
   try {
     const deliveryBoy = await DeliveryBoy.findOne({
-      where: { d_id },
+      where: { deliveryboy_id },
     });
 
     if (!deliveryBoy) {

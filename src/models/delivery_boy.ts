@@ -2,7 +2,7 @@ import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 
 interface DeliveryBoyAttributes {
-  d_id: number;
+  deliveryboy_id: number;
   name: string;
   mobile: string;
   removed?: boolean;
@@ -11,13 +11,13 @@ interface DeliveryBoyAttributes {
 }
 
 interface DeliveryBoyCreationAttributes
-  extends Optional<DeliveryBoyAttributes, 'd_id' | 'removed'> {}
+  extends Optional<DeliveryBoyAttributes, 'deliveryboy_id' | 'removed'> {}
 
 class DeliveryBoy
   extends Model<DeliveryBoyAttributes, DeliveryBoyCreationAttributes>
   implements DeliveryBoyAttributes
 {
-  public d_id!: number;
+  public deliveryboy_id!: number;
   public name!: string;
   public mobile!: string;
   public removed?: boolean;
@@ -28,7 +28,7 @@ class DeliveryBoy
 
 DeliveryBoy.init(
   {
-    d_id: {
+    deliveryboy_id: {
       type: DataTypes.INTEGER.UNSIGNED,
       autoIncrement: true,
       primaryKey: true,

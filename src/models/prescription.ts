@@ -155,7 +155,7 @@ Prescription.init(
       allowNull: true,
       references: {
         model: DeliveryBoy,
-        key: 'd_id',
+        key: 'deliveryboy_id',
       },
     },
     prescription_note: {

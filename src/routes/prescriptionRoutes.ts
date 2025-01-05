@@ -28,7 +28,10 @@ router.get(
 );
 
 router.get(
-  '/delivery-boy/prescription/delivery-boy',  passport.authenticate('jwt', { session: false }),getPrescriptionByDeliveryBoy)
+  '/delivery-boy/prescription/delivery-boy',
+  passport.authenticate('jwt', { session: false }),
+  getPrescriptionByDeliveryBoy
+);
 
 router.get(
   '/dashboard/all-prescription-count',
@@ -43,14 +46,16 @@ router.get(
 );
 
 router.get(
-  '/dashboard/all-prescription-count-by-delivery-boy/:d_id',
+  '/dashboard/all-prescription-count-by-delivery-boy/:deliveryboy_id',
   passport.authenticate('jwt', { session: false }),
   getPrescriptionStatusCountByDeliveryBoy
-)
+);
 
 router.get(
-  "/dashboard/prescriptions/finance", passport.authenticate('jwt', { session: false }),getPrescriptionForFinance
-)
+  '/dashboard/prescriptions/finance',
+  passport.authenticate('jwt', { session: false }),
+  getPrescriptionForFinance
+);
 
 router.put(
   '/dashboard/prescriptions/update-status',
