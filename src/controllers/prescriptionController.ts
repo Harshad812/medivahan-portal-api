@@ -595,7 +595,13 @@ export const createBillAndUpdatePrescription = async (
         return res.status(404).json({ message: 'Prescription not found' });
       }
 
-      const { bill_number, total_bill, deliveryboy_id } = fields;
+      const {
+        bill_number,
+        total_bill,
+        deliveryboy_id,
+        prescription_note,
+        admin_note,
+      } = fields;
       const uploadedBills = [];
 
       if (files?.bills) {
@@ -639,6 +645,9 @@ export const createBillAndUpdatePrescription = async (
       prescription.deliveryboy_id =
         deliveryboy_id || prescription.deliveryboy_id;
       prescription.status = 'dispatch';
+      prescription.prescription_note = prescription_note[0] ?? '';
+      prescription.admin_note = admin_note[0] ?? '';
+
       await prescription.save();
 
       res.status(200).json({
