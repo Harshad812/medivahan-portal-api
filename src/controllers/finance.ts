@@ -26,9 +26,13 @@ export const getFinanceData = async (req: Request, res: Response) => {
       (sum, prescription: any) => {
         const doctor = prescription.User;
         const bill = prescription.Bill;
+        const commission_amount = Number(prescription.commission_amount) || 0;
         const commission = (doctor?.commission || 0) / 100;
-        const totalBill = bill?.total_bill || 0;
-        return sum + commission * totalBill;
+        const totalBill = Number(bill?.total_bill) || 0;
+
+        const computedCommission = commission_amount || commission * totalBill;
+
+        return sum + computedCommission;
       },
       0
     );
@@ -45,9 +49,13 @@ export const getFinanceData = async (req: Request, res: Response) => {
       (sum, prescription: any) => {
         const doctor = prescription.User;
         const bill = prescription.Bill;
+        const commission_amount = Number(prescription.commission_amount) || 0;
         const commission = (doctor?.commission || 0) / 100;
-        const totalBill = bill?.total_bill || 0;
-        return sum + commission * totalBill;
+        const totalBill = Number(bill?.total_bill) || 0;
+
+        const computedCommission = commission_amount || commission * totalBill;
+
+        return sum + computedCommission;
       },
       0
     );
@@ -56,9 +64,13 @@ export const getFinanceData = async (req: Request, res: Response) => {
       (sum, prescription: any) => {
         const doctor = prescription.User;
         const bill = prescription.Bill;
+        const discount_amount = Number(prescription.discount_amount) || 0;
         const discount = (doctor?.discount || 0) / 100;
-        const totalBill = bill?.total_bill || 0;
-        return sum + discount * totalBill;
+        const totalBill = Number(bill?.total_bill) || 0;
+
+        const computedDiscount = discount_amount || discount * totalBill;
+
+        return sum + computedDiscount;
       },
       0
     );

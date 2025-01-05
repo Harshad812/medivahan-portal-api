@@ -19,6 +19,8 @@ interface PrescriptionAttributes {
   deliveryboy_id?: number;
   prescription_note: string;
   admin_note?: string;
+  commission_amount: number;
+  discount_amount: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -44,6 +46,8 @@ class Prescription
   public deliveryboy_id?: number;
   public prescription_note!: string;
   public admin_note?: string;
+  public commission_amount!: number;
+  public discount_amount!: number;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -161,6 +165,16 @@ Prescription.init(
     admin_note: {
       type: DataTypes.TEXT,
       allowNull: true,
+    },
+    commission_amount: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    discount_amount: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+      defaultValue: 0,
     },
   },
 
