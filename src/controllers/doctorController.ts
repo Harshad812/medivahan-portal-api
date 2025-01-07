@@ -272,6 +272,7 @@ export const getPrescriptionByDoctor = async (req: Request, res: Response) => {
         'mobile',
         'status',
         'createdAt',
+        'commission_amount',
       ],
       where: searchCondition[Op.and].length ? searchCondition : {},
       include: [
@@ -347,8 +348,54 @@ export const getTotalPaidAndTotalDueByUser = async (
       return res.status(404).json({ message: 'User not found' });
     }
 
+    const deliveredPrescriptions = await Prescription.findAll({
+      where: { user_id: userId, status: 'delivered' },
+      include: [
+        { model: User, attributes: ['commission'] },
+        { model: Bill, attributes: ['total_bill'] },
+      ],
+    });
+
+    const pendingDues = deliveredPrescriptions?.reduce(
+      (sum, prescription: any) => {
+        const doctor = prescription.User;
+        const bill = prescription.Bill;
+        const commission_amount = Number(prescription.commission_amount) || 0;
+        const commission = (doctor?.commission || 0) / 100;
+        const totalBill = Number(bill?.total_bill) || 0;
+
+        const computedCommission = commission_amount || commission * totalBill;
+
+        return sum + computedCommission;
+      },
+      0
+    );
+
+    const closedPrescriptions = await Prescription.findAll({
+      where: { user_id: userId, status: 'closed' },
+      include: [
+        { model: User, attributes: ['commission', 'discount'] },
+        { model: Bill, attributes: ['total_bill'] },
+      ],
+    });
+
+    const paidToDoctors = closedPrescriptions?.reduce(
+      (sum, prescription: any) => {
+        const doctor = prescription.User;
+        const bill = prescription.Bill;
+        const commission_amount = Number(prescription.commission_amount) || 0;
+        const commission = (doctor?.commission || 0) / 100;
+        const totalBill = Number(bill?.total_bill) || 0;
+
+        const computedCommission = commission_amount || commission * totalBill;
+
+        return sum + computedCommission;
+      },
+      0
+    );
+
     // Ensure commission is not undefined or null; set default if necessary
-    const doctorCommission = user.commission ? user.commission / 100 : 0; // Convert to decimal
+    // const doctorCommission = user.commission ? user.commission / 100 : 0; // Convert to decimal
 
     // Calculate total due for delivered prescriptions
     const totalDueResult: any = await Prescription.findAll({
@@ -365,7 +412,7 @@ export const getTotalPaidAndTotalDueByUser = async (
       raw: true,
     });
     const totalDue = totalDueResult[0]?.totalDue || 0;
-    const payableDue = totalDue * doctorCommission; // Calculate commission on total due
+    // const payableDue = totalDue * doctorCommission; // Calculate commission on total due
 
     // Calculate total paid for closed prescriptions
     const totalPaidResult: any = await Prescription.findAll({
@@ -382,13 +429,13 @@ export const getTotalPaidAndTotalDueByUser = async (
       raw: true,
     });
     const totalPaid = totalPaidResult[0]?.totalPaid || 0;
-    const payablePaid = totalPaid * doctorCommission; // Calculate commission on total paid
+    // const payablePaid = totalPaid * doctorCommission; // Calculate commission on total paid
 
     res.status(200).json({
       totalPaid,
       totalDue,
-      payableDue, // Commission amount for 'delivered' prescriptions
-      payablePaid, // Commission amount for 'closed' prescriptions
+      payableDue: pendingDues, // Commission amount for 'delivered' prescriptions
+      payablePaid: paidToDoctors, // Commission amount for 'closed' prescriptions
     });
   } catch (error: any) {
     res.status(500).json({
