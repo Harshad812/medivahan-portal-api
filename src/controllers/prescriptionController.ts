@@ -82,13 +82,18 @@ export const createPrescription = async (req: Request, res: Response) => {
     if (!files || !files.images || files.images.length === 0) {
       return res.status(400).send('No file uploaded.');
     }
-    const { patient_name, mobile, address, city, near_by, prescription_note } =
-      fields;
+    const {
+      patient_name,
+      mobile,
+      address,
+      city,
+      near_by,
+      user_id,
+      admin_note,
+      prescription_note,
+    } = fields;
 
     try {
-      const decodedToken: any = jwt.verify(accessToken, JWT_SECRET);
-
-      const userId = decodedToken.id;
       const uploadedPrescriptions = [];
 
       for (let i = 0; i < files?.images?.length; i++) {
@@ -115,9 +120,9 @@ export const createPrescription = async (req: Request, res: Response) => {
         city: city[0],
         near_by: near_by[0],
         prescriptions: uploadedPrescriptions,
-        user_id: userId,
+        user_id: user_id[0],
         prescription_note: prescription_note ? prescription_note[0] : '',
-        admin_note: '',
+        admin_note: admin_note ? admin_note[0] : '',
         commission_amount: 0,
         discount_amount: 0,
       });

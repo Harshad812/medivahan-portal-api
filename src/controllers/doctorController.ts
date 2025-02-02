@@ -54,6 +54,31 @@ export const doctorDetails = async (req: Request, res: Response) => {
   }
 };
 
+export const getDoctorNameAndId = async (req: Request, res: Response) => {
+  try {
+    const doctors = await User.findAll({
+      attributes: ['id', 'firstname', 'lastname'],
+    });
+
+    if (!doctors) {
+      return res.status(404).json({ message: 'Doctors not found' });
+    }
+
+    res.status(200).json({
+      message: 'Doctors list retrieved successfully',
+      doctors,
+    });
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid or expired token' });
+    }
+    res.status(500).json({
+      message: 'Error retrieving Doctors list',
+      error: error.message,
+    });
+  }
+};
+
 export const getAllDoctor = async (req: Request, res: Response) => {
   try {
     const {
