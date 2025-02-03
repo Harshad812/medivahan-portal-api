@@ -1,17 +1,20 @@
-import AWS from 'aws-sdk';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import mime from 'mime-types';
 
-const s3 = new AWS.S3({
-  accessKeyId: process.env.REACT_APP_AWS_ACCESSKEY_ID,
-  secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESSKEY,
+// Create an S3 Client
+const s3Client = new S3Client({
   region: process.env.REACT_APP_AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.REACT_APP_AWS_ACCESSKEY_ID as string,
+    secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESSKEY as string,
+  },
 });
 
 export const uploadImageBufferToS3 = async (
   buffer: Buffer,
   fileName: string
 ): Promise<string> => {
-  const bucketName = process.env.REACT_APP_AWS_BUCKET_NAME;
+  const bucketName = 'medivahanprescription';
 
   if (!bucketName) {
     throw new Error('Bucket name is not defined in environment variables.');
@@ -23,18 +26,23 @@ export const uploadImageBufferToS3 = async (
     throw new Error('Unable to determine the MIME type for the file.');
   }
 
+  const key = `uploads/${Date.now()}-${fileName}`;
+
   const params = {
     Bucket: bucketName,
-    Key: `uploads/${Date.now()}-${fileName}`,
+    Key: key,
     Body: buffer,
     ContentType: contentType,
   };
 
   try {
-    const data = await s3.upload(params).promise();
-    console.log('Image successfully uploaded to S3:', data.Location);
+    const command = new PutObjectCommand(params);
+    await s3Client.send(command);
 
-    return data.Location;
+    const location = `https://${bucketName}.s3.${process.env.REACT_APP_AWS_REGION}.amazonaws.com/${key}`;
+    console.log('Image successfully uploaded to S3:', location);
+
+    return location;
   } catch (error) {
     console.error('Error uploading image to S3:', error);
     throw error;
