@@ -91,6 +91,7 @@ export const createPrescription = async (req: Request, res: Response) => {
       user_id,
       admin_note,
       prescription_note,
+      priority,
     } = fields;
 
     try {
@@ -125,6 +126,7 @@ export const createPrescription = async (req: Request, res: Response) => {
         admin_note: admin_note ? admin_note[0] : '',
         commission_amount: 0,
         discount_amount: 0,
+        priority: priority ? priority[0] : 'low',
       });
 
       if (newPrescription) {
@@ -489,6 +491,7 @@ export const getAllPrescription = async (req: Request, res: Response) => {
         'prescription_note',
         'admin_note',
         'createdAt',
+        'priority',
       ],
       where: searchCondition[Op.and].length ? searchCondition : {},
       include: [
@@ -864,6 +867,7 @@ export const getPrescriptionByDeliveryBoy = async (
         'prescription_note',
         'admin_note',
         'createdAt',
+        'priority',
       ],
       where: searchCondition[Op.and].length ? searchCondition : {},
       include: [
@@ -1050,6 +1054,7 @@ export const getPrescriptionForFinance = async (
         'commission_amount',
         'discount_amount',
         'createdAt',
+        'priority',
       ],
       where: searchCondition[Op.and].length ? searchCondition : {},
       include: [

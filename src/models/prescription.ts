@@ -23,6 +23,7 @@ interface PrescriptionAttributes {
   discount_amount: number;
   createdAt?: Date;
   updatedAt?: Date;
+  priority?: string;
 }
 
 interface PrescriptionCreationAttributes
@@ -48,6 +49,8 @@ class Prescription
   public admin_note?: string;
   public commission_amount!: number;
   public discount_amount!: number;
+  public priority?: string;
+
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -175,6 +178,10 @@ Prescription.init(
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
       defaultValue: 0,
+    },
+    priority: {
+      type: DataTypes.ENUM('urgent','high', 'medium', 'low'),
+      allowNull: true,
     },
   },
 
